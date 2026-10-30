@@ -41,6 +41,26 @@ class Produit {
     };
   }
 
+  Produit copyWith({
+    int? id,
+    String? nom,
+    double? prix,
+    int? quantite,
+    bool? disponible,
+    DateTime? dateAjout,
+    int? categorieId,
+  }) {
+    return Produit(
+      id: id ?? this.id,
+      nom: nom ?? this.nom,
+      prix: prix ?? this.prix,
+      quantite: quantite ?? this.quantite,
+      disponible: disponible ?? this.disponible,
+      dateAjout: dateAjout ?? this.dateAjout,
+      categorieId: categorieId ?? this.categorieId,
+    );
+  }
+
   @override
   String toString() {
     return 'Produit(id: $id, nom: $nom, prix: $prix, quantite: $quantite)';

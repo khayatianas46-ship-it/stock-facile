@@ -1,156 +1,51 @@
-
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 
-import '../database/database_helper.dart';
-import '../database/categorie_dao.dart';
 import '../database/produit_dao.dart';
-import '../models/categorie.dart';
 import '../models/produit.dart';
 import 'produits_screen.dart';
 
-class TestsScreen extends StatelessWidget {
+class TestsScreen extends StatefulWidget {
   const TestsScreen({super.key});
 
-  // Q3 : Ouvrir la base et compter les catégories
-  Future<void> ouvrirBase() async {
-    final db = await DatabaseHelper().database;
+  @override
+  State<TestsScreen> createState() => _TestsScreenState();
+}
 
-    final resultat = await db.rawQuery(
-      'SELECT COUNT(*) AS nb FROM categories',
-    );
+class _TestsScreenState extends State<TestsScreen> {
+  final ProduitDao _produitDao = ProduitDao();
 
-    debugPrint('Nombre de catégories : ${resultat.first['nb']}');
-  }
+  String _message = 'Choisissez un test';
 
-  // Q4.3 et Q4.4 : Insérer une catégorie et gérer les doublons
-  Future<void> testerInsertionCategorie(BuildContext context) async {
-    final nouvelle = Categorie(
-      nom: 'Électroménager',
-      description: 'Petits appareils',
-    );
-
+  Future<void> _testerModifierProduit() async {
     try {
-      final id = await CategorieDao().insererCategorie(nouvelle);
+      final Produit? produit =
+          await _produitDao.lireProduitParId(1);
 
-      debugPrint('Catégorie insérée avec l id $id');
+      if (produit == null) {
+        setState(() {
+          _message = 'Le produit 1 n’existe pas';
+        });
+        return;
+      }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Catégorie ajoutée avec succès. ID : $id'),
-        ),
+      final Produit produitModifie = produit.copyWith(
+        prix: produit.prix + 1,
       );
-    } on DatabaseException catch (e) {
-      if (e.isUniqueConstraintError()) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cette catégorie existe déjà'),
-          ),
-        );
-      } else {
-        debugPrint('Erreur SQLite : $e');
-      }
+
+      final int resultat =
+          await _produitDao.modifierProduit(produitModifie);
+
+      setState(() {
+        _message =
+            'Lignes modifiées : $resultat\n'
+            'Ancien prix : ${produit.prix}\n'
+            'Nouveau prix : ${produitModifie.prix} DT';
+      });
+    } catch (e) {
+      setState(() {
+        _message = 'Erreur : $e';
+      });
     }
-  }
-
-  // Q4.8 : Insérer un produit
-  Future<void> testerInsertionProduit() async {
-    final produit = Produit(
-      nom: 'Stylo bleu',
-      prix: 0.500,
-      quantite: 100,
-      disponible: true,
-      dateAjout: DateTime.now(),
-      categorieId: 4,
-    );
-
-    try {
-      final id = await ProduitDao().insererProduit(produit);
-      debugPrint('Produit inséré avec l id $id');
-    } on DatabaseException catch (e) {
-      debugPrint('Erreur SQLite : $e');
-    }
-  }
-
-  // Q4.10 : Tester une clé étrangère invalide
-  Future<void> testerCleEtrangere() async {
-    final produit = Produit(
-      nom: 'Produit test FK',
-      prix: 5.0,
-      quantite: 10,
-      disponible: true,
-      dateAjout: DateTime.now(),
-      categorieId: 99,
-    );
-
-    try {
-      final id = await ProduitDao().insererProduit(produit);
-      debugPrint('Produit inséré avec l id $id');
-    } on DatabaseException catch (e) {
-      debugPrint('Erreur SQLite : $e');
-    }
-  }
-
-  // Q4.11 : Tester un prix négatif
-  Future<void> testerPrixNegatif() async {
-    final produit = Produit(
-      nom: 'Produit prix négatif',
-      prix: -2,
-      quantite: 5,
-      disponible: true,
-      dateAjout: DateTime.now(),
-      categorieId: 4,
-    );
-
-    try {
-      final id = await ProduitDao().insererProduit(produit);
-      debugPrint('Produit inséré avec l id $id');
-    } on DatabaseException catch (e) {
-      debugPrint('Erreur SQLite : $e');
-    }
-  }
-
-  // Q5.3 : Tester la lecture des produits
-  Future<void> testerLectureProduits() async {
-    final db = await DatabaseHelper().database;
-
-    // a) Lire les produits sans conversion
-    final lignes = await db.query('produits');
-
-    debugPrint('Résultat brut : $lignes');
-    debugPrint('Type du résultat : ${lignes.runtimeType}');
-
-    if (lignes.isNotEmpty) {
-      debugPrint('Type d une ligne : ${lignes.first.runtimeType}');
-
-      // b) Essayer de modifier une ligne
-      try {
-        lignes.first['nom'] = 'Test';
-        debugPrint('La modification de la Map a réussi.');
-      } catch (e) {
-        debugPrint('Erreur lors de la modification : $e');
-      }
-    }
-
-    // c) Lire les produits avec conversion en objets Dart
-    final produits = await ProduitDao().lireProduits();
-
-    debugPrint('Liste des produits convertis :');
-
-    for (final produit in produits) {
-      debugPrint(produit.toString());
-    }
-  }
-
-  // Q5.4 : Tester la lecture par ID
-  Future<void> testerProduitParId() async {
-    final dao = ProduitDao();
-
-    final produit1 = await dao.lireProduitParId(1);
-    debugPrint('Produit ID 1 : $produit1');
-
-    final produit999 = await dao.lireProduitParId(999);
-    debugPrint('Produit ID 999 : $produit999');
   }
 
   @override
@@ -159,71 +54,47 @@ class TestsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Tests StockFacile'),
       ),
-      body: ListView(
+      body: Padding(
         padding: const EdgeInsets.all(16),
-        children: [
-          ElevatedButton(
-            onPressed: ouvrirBase,
-            child: const Text('Ouvrir la base'),
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ElevatedButton(
+              onPressed: _testerModifierProduit,
+              child: const Text(
+                'Modifier le prix du produit 1 (+1 DT)',
+              ),
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-          ElevatedButton(
-            onPressed: () => testerInsertionCategorie(context),
-            child: const Text('Test : ajouter une catégorie'),
-          ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ProduitsScreen(),
+                  ),
+                );
+              },
+              child: const Text('Afficher les produits'),
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 24),
 
-          ElevatedButton(
-            onPressed: testerInsertionProduit,
-            child: const Text('Test : ajouter un produit'),
-          ),
+            const Text(
+              'Résultat du test :',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
-          ElevatedButton(
-            onPressed: testerCleEtrangere,
-            child: const Text('Test : clé étrangère'),
-          ),
-
-          const SizedBox(height: 12),
-
-          ElevatedButton(
-            onPressed: testerPrixNegatif,
-            child: const Text('Test : prix négatif'),
-          ),
-
-          const Divider(height: 32),
-
-          ElevatedButton(
-            onPressed: testerLectureProduits,
-            child: const Text('Test : lire les produits'),
-          ),
-
-          const SizedBox(height: 12),
-
-          ElevatedButton(
-            onPressed: testerProduitParId,
-            child: const Text('Test : lire un produit par ID'),
-          ),
-
-          const Divider(height: 32),
-
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ProduitsScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.inventory),
-            label: const Text('Afficher les produits'),
-          ),
-        ],
+            Text(_message),
+          ],
+        ),
       ),
     );
   }

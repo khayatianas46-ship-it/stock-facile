@@ -26,3 +26,9 @@ GROUP BY categories.id;
 -- Q1.5.6 : Valeur totale du stock
 SELECT SUM(prix * quantite) AS valeur_totale_stock
 FROM produits;
+
+SELECT * FROM produits
+ORDER BY nom ASC;
+
+SELECT * FROM produits
+WHERE id = 3;
