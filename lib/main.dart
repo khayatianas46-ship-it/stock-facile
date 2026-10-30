@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'screens/tests_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,11 +14,11 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   }
 
-  runApp(const MaterialApp());
+  runApp(const StockFacileApp());
 }
-  
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+
+class StockFacileApp extends StatelessWidget {
+  const StockFacileApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,14 +31,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.green,
         ),
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('StockFacile'),
-        ),
-        body: const Center(
-          child: Text('Bienvenue dans StockFacile'),
-        ),
-      ),
+      home: const TestsScreen(),
     );
   }
 }
