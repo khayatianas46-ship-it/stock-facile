@@ -1,18 +1,53 @@
+
 import 'package:sqflite/sqflite.dart';
+
 import '../models/categorie.dart';
 import 'database_helper.dart';
 
 class CategorieDao {
   static const String table = 'categories';
 
+  // Insérer une catégorie
   Future<int> insererCategorie(Categorie categorie) async {
-    // 1. Récupérer la connexion à la base de données.
     final Database db = await DatabaseHelper().database;
 
-    // 2. Insérer la catégorie dans la table et récupérer son ID.
-    final int id = await db.insert(table, categorie.toMap());
+    final int id = await db.insert(
+      table,
+      categorie.toMap(),
+    );
 
-    // 3. Retourner l'ID de la catégorie insérée.
     return id;
+  }
+
+  // Lire toutes les catégories triées par nom
+  Future<List<Categorie>> lireCategories() async {
+    final db = await DatabaseHelper().database;
+
+    final lignes = await db.query(
+      table,
+      orderBy: 'nom ASC',
+    );
+
+    return lignes
+        .map((ligne) => Categorie.fromMap(ligne))
+        .toList();
+  }
+
+  // Lire une catégorie par son ID
+  Future<Categorie?> lireCategorieParId(int id) async {
+    final db = await DatabaseHelper().database;
+
+    final lignes = await db.query(
+      table,
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (lignes.isEmpty) {
+      return null;
+    }
+
+    return Categorie.fromMap(lignes.first);
   }
 }

@@ -7,6 +7,7 @@ import '../database/categorie_dao.dart';
 import '../database/produit_dao.dart';
 import '../models/categorie.dart';
 import '../models/produit.dart';
+import 'produits_screen.dart';
 
 class TestsScreen extends StatelessWidget {
   const TestsScreen({super.key});
@@ -109,6 +110,49 @@ class TestsScreen extends StatelessWidget {
     }
   }
 
+  // Q5.3 : Tester la lecture des produits
+  Future<void> testerLectureProduits() async {
+    final db = await DatabaseHelper().database;
+
+    // a) Lire les produits sans conversion
+    final lignes = await db.query('produits');
+
+    debugPrint('Résultat brut : $lignes');
+    debugPrint('Type du résultat : ${lignes.runtimeType}');
+
+    if (lignes.isNotEmpty) {
+      debugPrint('Type d une ligne : ${lignes.first.runtimeType}');
+
+      // b) Essayer de modifier une ligne
+      try {
+        lignes.first['nom'] = 'Test';
+        debugPrint('La modification de la Map a réussi.');
+      } catch (e) {
+        debugPrint('Erreur lors de la modification : $e');
+      }
+    }
+
+    // c) Lire les produits avec conversion en objets Dart
+    final produits = await ProduitDao().lireProduits();
+
+    debugPrint('Liste des produits convertis :');
+
+    for (final produit in produits) {
+      debugPrint(produit.toString());
+    }
+  }
+
+  // Q5.4 : Tester la lecture par ID
+  Future<void> testerProduitParId() async {
+    final dao = ProduitDao();
+
+    final produit1 = await dao.lireProduitParId(1);
+    debugPrint('Produit ID 1 : $produit1');
+
+    final produit999 = await dao.lireProduitParId(999);
+    debugPrint('Produit ID 999 : $produit999');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,29 +166,62 @@ class TestsScreen extends StatelessWidget {
             onPressed: ouvrirBase,
             child: const Text('Ouvrir la base'),
           ),
+
           const SizedBox(height: 12),
 
           ElevatedButton(
             onPressed: () => testerInsertionCategorie(context),
             child: const Text('Test : ajouter une catégorie'),
           ),
+
           const SizedBox(height: 12),
 
           ElevatedButton(
             onPressed: testerInsertionProduit,
             child: const Text('Test : ajouter un produit'),
           ),
+
           const SizedBox(height: 12),
 
           ElevatedButton(
             onPressed: testerCleEtrangere,
             child: const Text('Test : clé étrangère'),
           ),
+
           const SizedBox(height: 12),
 
           ElevatedButton(
             onPressed: testerPrixNegatif,
             child: const Text('Test : prix négatif'),
+          ),
+
+          const Divider(height: 32),
+
+          ElevatedButton(
+            onPressed: testerLectureProduits,
+            child: const Text('Test : lire les produits'),
+          ),
+
+          const SizedBox(height: 12),
+
+          ElevatedButton(
+            onPressed: testerProduitParId,
+            child: const Text('Test : lire un produit par ID'),
+          ),
+
+          const Divider(height: 32),
+
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProduitsScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.inventory),
+            label: const Text('Afficher les produits'),
           ),
         ],
       ),
